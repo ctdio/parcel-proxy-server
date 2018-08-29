@@ -1,0 +1,20 @@
+{
+  "name": "parcel-proxy-server",
+  "version": "0.0.1",
+  "description": "Parcel dev server but with support for proxies",
+  "main": "index.js",
+  "author": "Charlie Duong",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.3",
+    "http-proxy-middleware": "^0.19.0",
+    "open": "^0.0.5",
+    "selfsigned": "^1.10.3"
+  },
+  "peerDependencies": {
+    "parcel-bundler": "^1.9.7"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.9.7"
+  }
+}
