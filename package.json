@@ -1,6 +1,6 @@
 {
   "name": "parcel-proxy-server",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Parcel dev server but with support for proxies",
   "main": "index.js",
   "author": "Charlie Duong",
