@@ -6,42 +6,52 @@ const proxyMiddleware = require('http-proxy-middleware');
 const open = require('open');
 const selfSigned = require('selfsigned');
 
-function generatePems() {
+const DEFAULT_PEM_PATHS = {
+  key: './server.key',
+  cert: './server.cert'
+};
+
+function generatePemsIfNotExists({ key: keyPath, cert: certPath } = DEFAULT_PEM_PATHS) {
   let key;
   let cert;
 
-  if (fs.existsSync('./server.key') && fs.existsSync('./server.cert')) {
-    key = fs.readFileSync('./server.key');
-    cert = fs.readFileSync('./server.cert');
+  if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    key = fs.readFileSync(keyPath);
+    cert = fs.readFileSync(certPath);
   } else {
     const pems = selfSigned.generate(null, { days: 365 });
     key = pems.private;
     cert = pems.cert;
 
-    fs.writeFileSync('./server.key', key);
-    fs.writeFileSync('./server.cert', cert);
+    fs.writeFileSync(keyPath, key);
+    fs.writeFileSync(certPath, cert);
   }
 
   return { key, cert };
 }
 
 class Server {
-  constructor (entryPoint, parcelOptions = {}, proxies = {}) {
+  constructor ({ entryPoint, parcelOptions = {}, proxies = {} }) {
     const { https: httpsOptions } = parcelOptions;
 
-    if (httpsOptions) {
-      if (httpsOptions === true) {
-        this.httpsOptions = generatePems();
-        parcelOptions.https = {
-          key: './server.key',
-          cert: './server.cert'
-        }
-      } else {
-        const { cert, key } = httpsOptions;
-        if (cert && key) {
-          this.httpsOptions = httpsOptions;
+    try {
+      if (httpsOptions) {
+        if (httpsOptions === true) {
+          this.httpsOptions = generatePemsIfNotExists(DEFAULT_PEM_PATHS);
+          parcelOptions.https = DEFAULT_PEM_PATHS;
+        } else {
+          const { cert, key } = httpsOptions;
+          if (cert && key) {
+            this.httpsOptions = generatePemsIfNotExists(httpsOptions);
+          }
         }
       }
+    } catch (err) {
+      console.warn(`Error fetching ssl certs: ${err.message}`);
+      console.warn('Starting dev server with https = false');
+
+      this.httpsOptions = null;
+      parcelOptions.https = false;
     }
 
     if (parcelOptions.open === true || parcelOptions.open === undefined) {
@@ -51,7 +61,6 @@ class Server {
     const outDir = parcelOptions.outDir || './dist';
 
     const bundler = this.bundler = new Bundler(entryPoint, parcelOptions);
-
     const app = this.app = express();
 
     app.use(
