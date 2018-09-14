@@ -3,7 +3,7 @@ const https = require('https');
 const express = require('express');
 const Bundler = require('parcel-bundler');
 const proxyMiddleware = require('http-proxy-middleware');
-const open = require('open');
+const opn = require('opn');
 const selfSigned = require('selfsigned');
 
 const DEFAULT_PEM_PATHS = {
@@ -30,7 +30,7 @@ function generatePemsIfNotExists({ key: keyPath, cert: certPath } = DEFAULT_PEM_
   return { key, cert };
 }
 
-class Server {
+class ParcelProxyServer {
   constructor ({ entryPoint, parcelOptions = {}, proxies = {} }) {
     const { https: httpsOptions } = parcelOptions;
 
@@ -48,15 +48,13 @@ class Server {
       }
     } catch (err) {
       console.warn(`Error fetching ssl certs: ${err.message}`);
-      console.warn('Starting dev server with https = false');
+      console.warn('Parcel dev server with https = false');
 
       this.httpsOptions = null;
       parcelOptions.https = false;
     }
 
-    if (parcelOptions.open === true || parcelOptions.open === undefined) {
-      this.openBrowser = true
-    }
+    this.openApp = parcelOptions.open;
 
     const outDir = parcelOptions.outDir || './dist';
 
@@ -72,7 +70,7 @@ class Server {
   }
 
   listen (port, callback) {
-    const { app, openBrowser, httpsOptions } = this;
+    const { app, openApp, httpsOptions } = this;
     let server;
     let protocol;
 
@@ -84,9 +82,14 @@ class Server {
       protocol = 'http';
     }
 
-    const wrappedCallback = () => {
-      if (open) {
-        open(`${protocol}://localhost:${port}`);
+    const wrappedCallback = async function () {
+      if (openApp) {
+        const options = typeof openApp === 'string' ? {app: openApp} : undefined;
+        try {
+          await opn(`${protocol}://localhost:${port}`, options);
+        } catch (err) {
+          console.warn(`Warning: unable to open app (open=${openApp}) Reason: ${err.message}`);
+        }
       }
       callback();
     };
@@ -95,4 +98,4 @@ class Server {
   }
 }
 
-module.exports = Server;
+module.exports = ParcelProxyServer;

@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+
+const ParcelProxyServer = require('../index');
+
+function getProxies (currentDir) {
+  try {
+    const packageJson = require(`${currentDir}/package.json`);
+    return packageJson.proxies;
+  } catch (err) {
+    // unable to get package json
+    console.warn('Unable to read proxies from package.json');
+  }
+}
+
+(function run () {
+  const { argv } = process;
+  const currentDir = process.cwd();
+
+  const entryPoint = argv[2];
+  if (!entryPoint) {
+    console.error('Entry point must be provided');
+    return;
+  }
+
+  const parcelOptions = {};
+
+  const proxies = getProxies(currentDir);
+
+  const server = new ParcelProxyServer({
+    entryPoint,
+    parcelOptions,
+    proxies
+  });
+
+  server.listen(8080, (err) => {
+    if (err) {
+      console.error(err);
+      process.exit(1);
+    }
+  });
+})();
