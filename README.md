@@ -6,12 +6,10 @@ that adds support for proxies, just like `webpack`.
 ## Installation
 
 ```bash
+# with yarn
 yarn add parcel parcel-proxy-server
-```
 
-or
-
-```bash
+# with npm
 npm install parcel parcel-proxy-server
 ```
 
@@ -66,8 +64,9 @@ An `express` server is started and `http-proxy-middleware` is used
 to apply proxies. The bundler middleware then applied to the express
 server to serve files.
 
-To preserve some of the behaviour that the vanilla
-`parcel serve` command supports, the project.
+To preserve some of the behavior that the vanilla
+`parcel serve` command supports, the module checks if certain options
+are provided and reimplements it in a way that works with proxying.
 
 For example, if the `https` option is set to `true`,
 the server will generate certs and provide that
